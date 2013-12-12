@@ -32,6 +32,8 @@ public class CameraActivity extends Activity {
 
         mDrawOnTop = new DrawOnTop(this);
         mPreview = new PreviewSurf(this, mDrawOnTop);
+
+        setContentView(R.layout.activity_camera);
         recordButton = (Button) findViewById(R.id.record_button);
         testButton = (Button)findViewById(R.id.test_button);
 
@@ -57,7 +59,6 @@ public class CameraActivity extends Activity {
                 return true;
             }
         });
-        setContentView(R.layout.activity_camera);
         FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
         preview.addView(mPreview);
         FrameLayout DrawOnTopPreview = (FrameLayout) findViewById(R.id.drawOnTop_preview);

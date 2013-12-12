@@ -16,21 +16,26 @@ import java.util.List;
  * Created by davides on 12/9/13.
  */
 public class DrawOnTop extends View {
+    final int TOTAL_FRAMES = 100;
+    final int RESIZE_WIDTH = 100;
+    final int RESIZE_HEIGHT = 100;
+
     Bitmap mBitmap;
     Paint mPaintBlack;
     byte[] mYUVData;
     int[] mRGBData;
     int mImageWidth, mImageHeight;
-    double[] mBinSquared;
 
-    List<Bitmap> frames;
+    int[][] TrainingFrames;
+    int trainingIndex;
     boolean record;
     boolean framesCaptured;
 
     public DrawOnTop(Context context) {
         super(context);
-
-        frames= new ArrayList<Bitmap>();
+        //make space for TOTAL_FRAMES (i.e. 100 frames)
+        TrainingFrames = new int[TOTAL_FRAMES][];
+        trainingIndex = 0;
         record = false;
         mPaintBlack = new Paint();
         mPaintBlack.setStyle(Paint.Style.FILL);
@@ -41,11 +46,6 @@ public class DrawOnTop extends View {
         mBitmap = null;
         mYUVData = null;
         mRGBData = null;
-        mBinSquared = new double[256];
-        for (int bin = 0; bin < 256; bin++)
-        {
-            mBinSquared[bin] = ((double)bin) * bin;
-        } // bin
     }
 
     @Override
@@ -57,7 +57,8 @@ public class DrawOnTop extends View {
             int newImageWidth = canvasWidth;
             int newImageHeight = canvasHeight;
             int marginWidth = (canvasWidth - newImageWidth)/2;
-
+            if(trainingIndex < TOTAL_FRAMES && TrainingFrames[trainingIndex] == null)
+                TrainingFrames[trainingIndex] =new int[RESIZE_HEIGHT*RESIZE_WIDTH];
             // Convert from YUV to RGB
             //decodeYUV420SP(mRGBData, mYUVData, mImageWidth, mImageHeight);
             decodeYUV420SPGrayscale(mRGBData,mYUVData,mImageWidth,mImageHeight);
@@ -65,23 +66,29 @@ public class DrawOnTop extends View {
             mBitmap.setPixels(mRGBData, 0, mImageWidth, 0, 0,
                     mImageWidth, mImageHeight);
             //save first 100 frames into the list
-            if (record && frames.size()< 100)
+            if (record && trainingIndex< TOTAL_FRAMES)
             {
-                frames.add(Bitmap.createScaledBitmap(mBitmap,100,100,false));
+                Bitmap rescaled = Bitmap.createScaledBitmap(mBitmap,100,100,false);
+                rescaled.getPixels(TrainingFrames[trainingIndex],0,rescaled.getWidth(),0,0,rescaled.getWidth(),rescaled.getHeight());
+                for (int i=0;i<RESIZE_WIDTH*RESIZE_HEIGHT;i++)
+                    TrainingFrames[trainingIndex][i] = TrainingFrames[trainingIndex][i] & 0x000000FF;
+                trainingIndex++;
             }
             //show toast and set flag to exit activity
-            else if(!framesCaptured && frames.size() >=100)
+            else if(!framesCaptured && trainingIndex >=TOTAL_FRAMES)
             {
-                Toast.makeText(getContext(),"Frame array full",1000).show();
+                Toast.makeText(getContext(),"Frames captured for training",1000).show();
                 framesCaptured = true;
             }
-            Rect src = new Rect(0, 0,mImageWidth, mImageHeight);
-            Rect dst = new Rect(marginWidth, 0,
-                    canvasWidth-marginWidth, canvasHeight);
-            canvas.drawBitmap(mBitmap, src, dst, mPaintBlack);
 
 
-            String imageMeanStr = "Mean (R,G,B): ";
+//            Rect src = new Rect(0, 0,m            ImageWidth, mImageHeight);
+//            Rect dst = new Rect(marginWidth, 0,
+//                    canvasWidth-marginWidth, canvasHeight);
+//            canvas.drawBitmap(mBitmap, src, dst, mPaintBlack);
+
+
+            String imageMeanStr = "Similarity %: ";
             canvas.drawText(imageMeanStr, marginWidth+10-1, 30-1, mPaintBlack);
 
         }
