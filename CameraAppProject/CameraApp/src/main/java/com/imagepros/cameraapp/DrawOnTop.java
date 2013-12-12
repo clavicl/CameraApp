@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Toast;
 
@@ -16,8 +17,8 @@ import java.util.Random;
 public class DrawOnTop extends View {
     final int TOTAL_FRAMES = 200;
     final int MAX_POSITIVE = 100;
-    final int RESIZE_WIDTH = 178;//267;
-    final int RESIZE_HEIGHT = 100;//150;
+    final int RESIZE_WIDTH = 267;//178;
+    final int RESIZE_HEIGHT = 150;//100;
 
     Bitmap mBitmap;
     Bitmap rescaled;
@@ -39,12 +40,12 @@ public class DrawOnTop extends View {
 
     boolean test;
     int testI;
-    String status;
 
     public DrawOnTop(Context context) {
         super(context);
         //make space for TOTAL_FRAMES (i.e. 100 frames)
-        status = "No match";
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        float dp = 20f;
         TrainingFrames = new int[TOTAL_FRAMES][];
         trainingIndex = 0;
         classifyFlag = false;
@@ -54,11 +55,13 @@ public class DrawOnTop extends View {
         mPaintRed = new Paint();
         mPaintRed.setStyle(Paint.Style.FILL);
         mPaintRed.setColor(Color.RED);
-        mPaintRed.setTextSize(25);
+        mPaintRed.setTextSize((int)(metrics.density*dp+.5f));
+        mPaintRed.setFakeBoldText(true);
         mPaintGreen = new Paint();
         mPaintGreen.setStyle(Paint.Style.FILL);
         mPaintGreen.setColor(Color.GREEN);
-        mPaintGreen.setTextSize(25);
+        mPaintGreen.setTextSize((int)(metrics.density*dp+.5f));
+        mPaintRed.setFakeBoldText(true);
         framesCaptured = false;
         mStatusPaint = mPaintRed;
 
@@ -136,17 +139,15 @@ public class DrawOnTop extends View {
                         tmp[i] = tmp[i] & 0x000000FF;
                     if (classify(A,tmp) > 0) {
                         mStatusPaint = mPaintGreen;
-                        status = "MATCH!!!" ;
                     }
                     else {
                         mStatusPaint = mPaintRed;
-                        status = "No match";
                     }
                 }
             }
             if (framesCaptured) {
-                canvas.drawBitmap(rescaled, canvasWidth-RESIZE_WIDTH, 0, mPaintGreen);
-                canvas.drawText(status, marginWidth+10-1, 30-1, mStatusPaint);
+               canvas.drawBitmap(rescaled, canvasWidth-RESIZE_WIDTH, 0, mPaintGreen);
+               canvas.drawCircle(30,30,25,mStatusPaint);
             }
 
         }
