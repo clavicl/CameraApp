@@ -47,6 +47,7 @@ public class CameraActivity extends Activity {
                 else if(event.getAction() == MotionEvent.ACTION_UP)
                 {
                     mDrawOnTop.record = false;
+                    mDrawOnTop.resetRecord = true;
                 }
                 return true;
             }
@@ -55,6 +56,14 @@ public class CameraActivity extends Activity {
         testButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN)
+                {
+                    mDrawOnTop.test = true;
+                }
+                else if(event.getAction() == MotionEvent.ACTION_UP)
+                {
+                    mDrawOnTop.test = false;
+                }
                 //do something here
                 return true;
             }

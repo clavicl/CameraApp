@@ -5,47 +5,69 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
 /**
  * Created by davides on 12/9/13.
  */
 public class DrawOnTop extends View {
-    final int TOTAL_FRAMES = 100;
-    final int RESIZE_WIDTH = 100;
-    final int RESIZE_HEIGHT = 100;
+    final int TOTAL_FRAMES = 200;
+    final int MAX_POSITIVE = 100;
+    final int RESIZE_WIDTH = 178;//267;
+    final int RESIZE_HEIGHT = 100;//150;
 
     Bitmap mBitmap;
-    Paint mPaintBlack;
+    Bitmap rescaled;
+    Paint mPaintRed;
+    Paint mPaintGreen;
+    Paint mStatusPaint;
     byte[] mYUVData;
     int[] mRGBData;
     int mImageWidth, mImageHeight;
+    int mSimilarity;
 
     int[][] TrainingFrames;
     int trainingIndex;
+    int [] A;
     boolean record;
     boolean framesCaptured;
+    boolean resetRecord;
+    boolean classifyFlag;
+
+    boolean test;
+    int testI;
+    String status;
 
     public DrawOnTop(Context context) {
         super(context);
         //make space for TOTAL_FRAMES (i.e. 100 frames)
+        status = "No match";
         TrainingFrames = new int[TOTAL_FRAMES][];
         trainingIndex = 0;
+        classifyFlag = false;
         record = false;
-        mPaintBlack = new Paint();
-        mPaintBlack.setStyle(Paint.Style.FILL);
-        mPaintBlack.setColor(Color.BLACK);
-        mPaintBlack.setTextSize(25);
+        resetRecord = false;
+        mSimilarity = 0;
+        mPaintRed = new Paint();
+        mPaintRed.setStyle(Paint.Style.FILL);
+        mPaintRed.setColor(Color.RED);
+        mPaintRed.setTextSize(25);
+        mPaintGreen = new Paint();
+        mPaintGreen.setStyle(Paint.Style.FILL);
+        mPaintGreen.setColor(Color.GREEN);
+        mPaintGreen.setTextSize(25);
         framesCaptured = false;
+        mStatusPaint = mPaintRed;
 
         mBitmap = null;
         mYUVData = null;
         mRGBData = null;
+
+        test = false;
+        testI = 0;
     }
 
     @Override
@@ -66,9 +88,23 @@ public class DrawOnTop extends View {
             mBitmap.setPixels(mRGBData, 0, mImageWidth, 0, 0,
                     mImageWidth, mImageHeight);
             //save first 100 frames into the list
-            if (record && trainingIndex< TOTAL_FRAMES)
+
+            if (record && trainingIndex< MAX_POSITIVE)
             {
-                Bitmap rescaled = Bitmap.createScaledBitmap(mBitmap,100,100,false);
+                rescaled = Bitmap.createScaledBitmap(mBitmap,RESIZE_WIDTH,RESIZE_HEIGHT,false);
+                rescaled.getPixels(TrainingFrames[trainingIndex],0,rescaled.getWidth(),0,0,rescaled.getWidth(),rescaled.getHeight());
+                for (int i=0;i<RESIZE_WIDTH*RESIZE_HEIGHT;i++)
+                    TrainingFrames[trainingIndex][i] = TrainingFrames[trainingIndex][i] & 0x000000FF;
+                trainingIndex++;
+                if (trainingIndex == MAX_POSITIVE)
+                    Toast.makeText(getContext(),"Image Captured, move camera around for further training",2000).show();
+            }
+            else if(record && trainingIndex >= MAX_POSITIVE && trainingIndex < TOTAL_FRAMES){
+                if (resetRecord) {
+                    trainingIndex = MAX_POSITIVE;
+                    resetRecord = false;
+                }
+                rescaled = Bitmap.createScaledBitmap(mBitmap,RESIZE_WIDTH,RESIZE_HEIGHT,false);
                 rescaled.getPixels(TrainingFrames[trainingIndex],0,rescaled.getWidth(),0,0,rescaled.getWidth(),rescaled.getHeight());
                 for (int i=0;i<RESIZE_WIDTH*RESIZE_HEIGHT;i++)
                     TrainingFrames[trainingIndex][i] = TrainingFrames[trainingIndex][i] & 0x000000FF;
@@ -78,23 +114,115 @@ public class DrawOnTop extends View {
             else if(!framesCaptured && trainingIndex >=TOTAL_FRAMES)
             {
                 Toast.makeText(getContext(),"Frames captured for training",1000).show();
+                int [] tmp = new int[RESIZE_HEIGHT * RESIZE_WIDTH];
+                for (int i=0;i<RESIZE_WIDTH*RESIZE_HEIGHT;i++)
+                    tmp[i] = TrainingFrames[1][i] | (TrainingFrames[1][i] << 8) | (TrainingFrames[1][i] << 16);
+                rescaled.setPixels(tmp,0,RESIZE_WIDTH, 0, 0,
+                        RESIZE_WIDTH,RESIZE_HEIGHT);
                 framesCaptured = true;
+                classifyFlag = true;
+//                A = trainClassifier();
+//                Toast.makeText(getContext(),"A matrix trained",1000).show();
             }
 
+            if(test){
+                if(testI++ >= 10){
+                    testI = 0;
+                    int [] tmp= new int[RESIZE_HEIGHT*RESIZE_WIDTH];
 
-//            Rect src = new Rect(0, 0,m            ImageWidth, mImageHeight);
-//            Rect dst = new Rect(marginWidth, 0,
-//                    canvasWidth-marginWidth, canvasHeight);
-//            canvas.drawBitmap(mBitmap, src, dst, mPaintBlack);
-
-
-            String imageMeanStr = "Similarity %: ";
-            canvas.drawText(imageMeanStr, marginWidth+10-1, 30-1, mPaintBlack);
+                    Bitmap testImage = Bitmap.createScaledBitmap(mBitmap,RESIZE_WIDTH,RESIZE_HEIGHT,false);
+                    testImage.getPixels(tmp,0,testImage.getWidth(),0,0,testImage.getWidth(),testImage.getHeight());
+                    for (int i=0;i<RESIZE_WIDTH*RESIZE_HEIGHT;i++)
+                        tmp[i] = tmp[i] & 0x000000FF;
+                    if (classify(A,tmp) > 0) {
+                        mStatusPaint = mPaintGreen;
+                        status = "MATCH!!!" ;
+                    }
+                    else {
+                        mStatusPaint = mPaintRed;
+                        status = "No match";
+                    }
+                }
+            }
+            if (framesCaptured) {
+                canvas.drawBitmap(rescaled, canvasWidth-RESIZE_WIDTH, 0, mPaintGreen);
+                canvas.drawText(status, marginWidth+10-1, 30-1, mStatusPaint);
+            }
 
         }
 
         super.onDraw(canvas);
 
+        if (classifyFlag) {
+            classifyFlag = false;
+//            new Thread(new Runnable(){
+//                   @Override
+//                    public void run() {
+//                    try{
+//                        A = trainClassifier();
+//                        Toast.makeText(getContext(),"A matrix trained",1000).show();
+//                    }catch (Exception e){
+//                        Toast.makeText(getContext(),"something happened",1000).show();
+//                    }
+//                   }
+//                }).start();
+            A = trainClassifier();
+            Toast.makeText(getContext(),"A matrix trained",1000).show();
+        }
+    }
+
+   private int [] trainClassifier(){
+       Random rand = new Random();
+       int D=RESIZE_WIDTH*RESIZE_HEIGHT;
+       int [] A = new int[D];
+       int [] Aold = new int[D];
+       //Initialize A
+       for (int i=0;i<D;i++)
+           A[i]= 0;
+           //A[i]=rand.nextInt(255);
+       for (int i=0;i<200;i++){
+           boolean flag = false;
+           Aold = A;
+           for(int j=1;j<TOTAL_FRAMES;j++){
+               int c = classify(A,TrainingFrames[j]);
+                if (c<= 0 && j < MAX_POSITIVE){
+                    flag = true;
+                    A = sum(A,TrainingFrames[j]);
+                }
+               else if (c>0 && j >= MAX_POSITIVE){
+                    flag = true;
+                    A = diff(A,TrainingFrames[j]);
+                }
+           }
+           if (!flag || norm(diff(Aold,A)) <= 1)
+               break;
+       }
+       return A;
+    }
+    private double norm(int []A){
+        double n = 0;
+        for(int i=0;i < A.length;i++)
+            n = n+ Math.pow(A[i],2);
+        return Math.sqrt(n);
+    }
+    private int [] diff(int[]A, int[]X){
+        int[] s = new int[A.length];
+        for(int i=0;i<A.length;i++)
+            s[i] = A[i]-X[i];
+        return s;
+    }
+    private int [] sum(int[]A, int[]X){
+        int[] s = new int[A.length];
+        for(int i=0;i<A.length;i++)
+            s[i] = A[i] +X[i];
+        return s;
+    }
+    private int classify(int []A,int[] X){
+        int c = 0;
+        for(int i=0;i<A.length;i++){
+            c = c + (A[i] * X[i]);
+        }
+        return c;
     }
 
     static public void decodeYUV420SPGrayscale(int[] rgb, byte[] yuv420sp, int width, int height)
