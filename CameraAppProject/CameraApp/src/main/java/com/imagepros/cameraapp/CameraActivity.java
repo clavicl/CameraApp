@@ -1,25 +1,27 @@
 package com.imagepros.cameraapp;
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.support.v4.widget.DrawerLayout;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
-public class CameraActivity extends ActionBarActivity {
+public class CameraActivity extends Activity {
     private PreviewSurf mPreview;
     private DrawOnTop mDrawOnTop;
     private Button recordButton;
+    private Button testButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,8 +32,9 @@ public class CameraActivity extends ActionBarActivity {
 
         mDrawOnTop = new DrawOnTop(this);
         mPreview = new PreviewSurf(this, mDrawOnTop);
-        recordButton = new Button(this);
-        recordButton.setText("Record");
+        recordButton = (Button) findViewById(R.id.record_button);
+        testButton = (Button)findViewById(R.id.test_button);
+
         recordButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -46,16 +49,25 @@ public class CameraActivity extends ActionBarActivity {
                 return true;
             }
         });
-        setContentView(mPreview);
-        addContentView(mDrawOnTop, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        addContentView(recordButton, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        testButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                //do something here
+                return true;
+            }
+        });
+        setContentView(R.layout.activity_camera);
+        FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
+        preview.addView(mPreview);
+        FrameLayout DrawOnTopPreview = (FrameLayout) findViewById(R.id.drawOnTop_preview);
+        DrawOnTopPreview.addView(mDrawOnTop);
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.camera, menu);
         return true;

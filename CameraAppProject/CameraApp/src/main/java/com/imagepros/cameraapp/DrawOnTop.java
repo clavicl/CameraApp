@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,21 +18,14 @@ import java.util.List;
 public class DrawOnTop extends View {
     Bitmap mBitmap;
     Paint mPaintBlack;
-    Paint mPaintYellow;
-    Paint mPaintRed;
-    Paint mPaintGreen;
-    Paint mPaintBlue;
     byte[] mYUVData;
     int[] mRGBData;
     int mImageWidth, mImageHeight;
-    int[] mRedHistogram;
-    int[] mGreenHistogram;
-    int[] mBlueHistogram;
     double[] mBinSquared;
 
     List<Bitmap> frames;
     boolean record;
-    boolean flag;
+    boolean framesCaptured;
 
     public DrawOnTop(Context context) {
         super(context);
@@ -44,34 +36,11 @@ public class DrawOnTop extends View {
         mPaintBlack.setStyle(Paint.Style.FILL);
         mPaintBlack.setColor(Color.BLACK);
         mPaintBlack.setTextSize(25);
-        flag = true;
-/*
-        mPaintYellow = new Paint();
-        mPaintYellow.setStyle(Paint.Style.FILL);
-        mPaintYellow.setColor(Color.YELLOW);
-        mPaintYellow.setTextSize(25);
-
-        mPaintRed = new Paint();
-        mPaintRed.setStyle(Paint.Style.FILL);
-        mPaintRed.setColor(Color.RED);
-        mPaintRed.setTextSize(25);
-
-        mPaintGreen = new Paint();
-        mPaintGreen.setStyle(Paint.Style.FILL);
-        mPaintGreen.setColor(Color.GREEN);
-        mPaintGreen.setTextSize(25);
-
-        mPaintBlue = new Paint();
-        mPaintBlue.setStyle(Paint.Style.FILL);
-        mPaintBlue.setColor(Color.BLUE);
-        mPaintBlue.setTextSize(25);*/
+        framesCaptured = false;
 
         mBitmap = null;
         mYUVData = null;
         mRGBData = null;
-        /*mRedHistogram = new int[256];
-        mGreenHistogram = new int[256];
-        mBlueHistogram = new int[256];*/
         mBinSquared = new double[256];
         for (int bin = 0; bin < 256; bin++)
         {
@@ -95,14 +64,16 @@ public class DrawOnTop extends View {
             // Draw bitmap
             mBitmap.setPixels(mRGBData, 0, mImageWidth, 0, 0,
                     mImageWidth, mImageHeight);
+            //save first 100 frames into the list
             if (record && frames.size()< 100)
             {
                 frames.add(Bitmap.createScaledBitmap(mBitmap,100,100,false));
             }
-            else if(flag && frames.size() >=100)
+            //show toast and set flag to exit activity
+            else if(!framesCaptured && frames.size() >=100)
             {
                 Toast.makeText(getContext(),"Frame array full",1000).show();
-                flag = false;
+                framesCaptured = true;
             }
             Rect src = new Rect(0, 0,mImageWidth, mImageHeight);
             Rect dst = new Rect(marginWidth, 0,
@@ -110,7 +81,7 @@ public class DrawOnTop extends View {
             canvas.drawBitmap(mBitmap, src, dst, mPaintBlack);
 
 
-            String imageMeanStr = "Mean (R,G,B): ";// + String.format("%.4g", imageRedMean) + ", " + String.format("%.4g", imageGreenMean) + ", " + String.format("%.4g", imageBlueMean);
+            String imageMeanStr = "Mean (R,G,B): ";
             canvas.drawText(imageMeanStr, marginWidth+10-1, 30-1, mPaintBlack);
 
         }

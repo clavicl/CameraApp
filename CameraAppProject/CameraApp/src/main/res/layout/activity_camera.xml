@@ -1,21 +1,40 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/camera_container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".CameraActivity"
-    tools:ignore="MergeRootFrame">
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/camera_container"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".CameraActivity"
+tools:ignore="MergeRootFrame">
     <FrameLayout
         android:layout_height="fill_parent"
         android:layout_width="fill_parent"
         android:id="@+id/camera_preview"/>
+    <FrameLayout
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:id="@+id/drawOnTop_preview"
+        />
     <Button
+        android:id="@+id/record_button"
         android:layout_height="wrap_content"
         android:layout_width="100dp"
-        android:layout_alignBottom="@id/camera_preview"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
         android:layout_centerHorizontal="true"
         android:text="Capture"
         android:background="#ff000000"
         android:textColor="#fff"
         />
+    <Button
+        android:id="@+id/test_button"
+        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_centerHorizontal="true"
+        android:text="Test"
+        android:background="#ff000000"
+        android:textColor="#fff"
+        />
+
 </RelativeLayout>

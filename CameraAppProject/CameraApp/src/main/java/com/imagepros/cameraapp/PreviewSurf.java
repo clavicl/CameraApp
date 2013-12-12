@@ -1,5 +1,6 @@
 package com.imagepros.cameraapp;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -14,7 +15,7 @@ import java.io.IOException;
 public class PreviewSurf  extends SurfaceView implements SurfaceHolder.Callback{
     SurfaceHolder mHolder;
 
-
+    Activity mContext;
     Camera mCamera;
     DrawOnTop mDrawOnTop;
     boolean mFinished;
@@ -22,6 +23,7 @@ public class PreviewSurf  extends SurfaceView implements SurfaceHolder.Callback{
     PreviewSurf(Context context, DrawOnTop drawOnTop) {
         super(context);
 
+        mContext = (Activity)context;
         mDrawOnTop = drawOnTop;
         mFinished = false;
         mDrawOnTop.record = false;
@@ -30,7 +32,6 @@ public class PreviewSurf  extends SurfaceView implements SurfaceHolder.Callback{
         // underlying surface is created and destroyed.
         mHolder = getHolder();
         mHolder.addCallback(this);
-       // mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
